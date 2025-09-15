@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
 
+// Validar número de teléfono Nequi con indicativos permitidos
+export function validarNumeroTelefono(numero) {
+  if (numero.length !== 10) return false;
+  const indicativos = [
+    "300", "301", "302", "304", "305", "313", "314", "315", "316", "317", "318", "319",
+    "320", "321", "322", "323", "324", "350", "351"
+  ];
+  const prefijo = numero.substring(0, 3);
+  return indicativos.includes(prefijo) && /^\d{10}$/.test(numero);
+}
+
 export function useNequi() {
   const [claveNequi, setClaveNequi] = useState('');
   const [tiempoRestante, setTiempoRestante] = useState(0);

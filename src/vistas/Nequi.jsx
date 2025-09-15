@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { useNequi } from "../logica/useNequi";
-import { validarNumeroTelefono } from "../logica/utilidades";
+import { useNequi, validarNumeroTelefono } from "../logica/useNequi";
 import { ArrowLeft, CheckCircle } from "lucide-react"; // íconos
 
 const Nequi = () => {
@@ -78,10 +77,13 @@ const Nequi = () => {
             placeholder="3001234567"
             maxLength="10"
           />
-          {datos.numeroIngresado &&
-            datos.numeroIngresado.length === 10 && (
+          {datos.numeroIngresado.length === 10 && (
+            validarNumeroTelefono(datos.numeroIngresado) ? (
               <small className="text-success">✅ Número válido</small>
-            )}
+            ) : (
+              <small className="text-danger">❌ Número inválido</small>
+            )
+          )}
         </div>
 
         <div className="mb-4">
