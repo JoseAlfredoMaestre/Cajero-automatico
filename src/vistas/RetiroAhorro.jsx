@@ -17,6 +17,7 @@ const RetiroAhorro = () => {
 
   const montosFijos = [10000, 20000, 50000, 100000];
 
+  // Cargar datos de cuenta desde localStorage
   useEffect(() => {
     const datosGuardados = localStorage.getItem("datosAhorros");
     if (datosGuardados) {
@@ -36,9 +37,7 @@ const RetiroAhorro = () => {
         text: `❌ El monto $${monto.toLocaleString()} no puede ser entregado.
 Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000 y $100.000.`,
         confirmButtonText: "Reiniciar proceso",
-      }).then(() => {
-        reiniciarProceso();
-      });
+      }).then(reiniciarProceso);
       return;
     }
 
@@ -65,9 +64,7 @@ Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000
       confirmButtonText: "Sí, retirar",
       cancelButtonText: "Cancelar",
     }).then((result) => {
-      if (result.isConfirmed) {
-        procesarRetiro(monto);
-      }
+      if (result.isConfirmed) procesarRetiro(monto);
     });
   };
 
@@ -79,7 +76,7 @@ Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000
 
   const handleMontoPersonalizado = () => {
     const monto = parseInt(montoPersonalizado);
-    if (isNaN(monto) || monto <= 0) {
+    if (isNaN(monto) || monto <= 0 || monto % 10000 !== 0) {
       Swal.fire({
         icon: "warning",
         title: "Monto no válido",
@@ -125,7 +122,7 @@ Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000
           💳 Retiro Ahorro a la Mano
         </h3>
 
-        {!mostrarReporte && (
+        {!mostrarReporte ? (
           <>
             <div className="alert alert-light border rounded-3 mb-4">
               <strong>📋 Cuenta:</strong> {cuentaCompleta}
@@ -181,10 +178,21 @@ Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000
               </div>
               <small className="text-muted">Solo múltiplos de $10.000</small>
             </div>
-          </>
-        )}
 
-        {mostrarReporte && billetes && (
+            <button
+              className="btn w-100 fw-bold mt-3"
+              style={{
+                borderRadius: "12px",
+                background: "linear-gradient(90deg, #6c757d, #adb5bd)",
+                color: "white",
+                border: "none",
+              }}
+              onClick={() => navigate("/ahorro-mano")}
+            >
+              ← Volver
+            </button>
+          </>
+        ) : (
           <div className="mt-4">
             <div className="card border-success shadow-sm p-3">
               <h4 className="text-success mb-3">
@@ -246,21 +254,6 @@ Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000
               </button>
             </div>
           </div>
-        )}
-
-        {!mostrarReporte && (
-          <button
-            className="btn w-100 fw-bold mt-3"
-            style={{
-              borderRadius: "12px",
-              background: "linear-gradient(90deg, #6c757d, #adb5bd)",
-              color: "white",
-              border: "none",
-            }}
-            onClick={() => navigate("/ahorro-mano")}
-          >
-            ← Volver
-          </button>
         )}
       </div>
     </div>

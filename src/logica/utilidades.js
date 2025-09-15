@@ -1,134 +1,69 @@
-// ===== DEFINICIÓN DE BILLETES DISPONIBLES =====
-let billetes = [
-  { valor: 100000, disponibles: 25 },
-  { valor: 50000, disponibles: 40 },
-  { valor: 20000, disponibles: 60 },
-  { valor: 10000, disponibles: 80 }
+// utilidades.js (reemplaza/pega en tu archivo existente)
+
+// ===== DEFINICIÓN DE BILLETES =====
+// Orden ascendente (10k -> 100k) para implementar la lógica del acarreo
+const billetes = [
+  { valor: 10000 },
+  { valor: 20000 },
+  { valor: 50000 },
+  { valor: 100000 }
 ];
 
+// ===== VALIDAR NÚMERO DE TELÉFONO =====
 export function validarNumeroTelefono(numero) {
-  if (numero.length !== 10) return false;
-  return /^\d{10}$/.test(numero);
+  return /^\d{10}$/.test(numero); // 10 dígitos exactos
 }
 
-// ===== ALGORITMO DE ACARREO COMPLETO CON REINICIO =====
-export function generarMatrizAcarreo(cantidad) {
-  let matriz = [];
-  let suma = 0;
-  let totalRows = 0;
-  let alcanzado = false;
-  let iteraciones = 0;
-  const maxIteraciones = 2000;
+// ===== FUNCION: CALCULAR BILLETES (ALGORITMO DE ACARREO) =====
+export function calcularBilletes(monto) {
+  // monto válido: múltiplo de 10.000 y mayor que 0
+  if (!Number.isInteger(monto) || monto <= 0 || monto % 10000 !== 0) return null;
 
-  while (!alcanzado && iteraciones < maxIteraciones) {
-    let fila = new Array(billetes.length).fill(0);
-    let sePudoSumar = false;
-    let sumaTemporal = suma;
+  const denominaciones = billetes.map(b => b.valor);
+  const counts = Array(denominaciones.length).fill(0);
 
-    for (let j = totalRows; j < billetes.length; j++) {
-      if (sumaTemporal + billetes[j].valor <= cantidad) {
-        fila[j] = 1;
-        sumaTemporal += billetes[j].valor;
-        sePudoSumar = true;
+  let restante = monto;
+  let pos = 0;
+  let iter = 0;
+  const MAX_ITER = 10000; // protección contra bucle infinito
 
-        if (sumaTemporal === cantidad) {
-          alcanzado = true;
-          suma = sumaTemporal;
-          break;
-        }
-      }
+  // Reproducimos la lógica del PHP: iterar empezando en pos=0, luego pos=1, ...
+  while (restante > 0 && iter < MAX_ITER) {
+    let denom = denominaciones[pos];
+    let i = pos;
+
+    // Intentamos sumar billetes desde la posición actual hacia adelante
+    while (i < denominaciones.length && denom <= restante && restante > 0) {
+      counts[i]++;           // usamos un billete de esa denominación
+      restante -= denom;     // reducimos el restante
+      i++;
+      denom = denominaciones[i % denominaciones.length]; // siguiente denom (si i sale del rango, se toma módulo)
     }
 
-    suma = sumaTemporal;
-    matriz.push(fila);
-
-    if (!sePudoSumar) {
-      if (totalRows >= billetes.length - 1) {
-        totalRows = 0;
-        suma = 0;
-        matriz = [];
-      } else {
-        totalRows++;
-      }
-    } else {
-      totalRows++;
-    }
-
-    if (totalRows >= billetes.length) {
-      totalRows = 0;
-    }
-
-    iteraciones++;
+    // avanzamos la posición de inicio (pos) de forma cíclica
+    pos = (pos + 1) % denominaciones.length;
+    iter++;
   }
 
-  return { matriz, alcanzado, suma };
-}
-
-// ===== CALCULAR BILLETES DESDE LA MATRIZ =====
-export function calcularBilletesDesdeMatriz(matriz) {
-  let contadorBilletes = { 100000: 0, 50000: 0, 20000: 0, 10000: 0 };
-
-  matriz.forEach((fila) => {
-    fila.forEach((valor, columnaIndex) => {
-      if (valor === 1 && columnaIndex < billetes.length) {
-        const billete = billetes[columnaIndex];
-        contadorBilletes[billete.valor]++;
-      }
-    });
-  });
-
-  return contadorBilletes;
-}
-
-// ===== FUNCIÓN PRINCIPAL =====
-export function calcularBilletes(monto) {
-  if (monto % 10000 !== 0 || monto <= 0) {
+  if (restante !== 0) {
+    // No se pudo formar el monto exacto con las denominaciones (debería pasar solo en montos inválidos)
     return null;
   }
 
-  const resultadoAcarreo = generarMatrizAcarreo(monto);
+  // Convertimos counts a un objeto { 10000: n, 20000: n, ... }
+  const resultado = {};
+  denominaciones.forEach((d, idx) => (resultado[d] = counts[idx]));
 
-  if (resultadoAcarreo.alcanzado && resultadoAcarreo.suma === monto) {
-    const contadorBilletes = calcularBilletesDesdeMatriz(resultadoAcarreo.matriz);
-
-    if (verificarDisponibilidad(contadorBilletes)) {
-      actualizarDisponibilidad(contadorBilletes);
-      return contadorBilletes;
-    }
-  }
-
-  return null;
+  return resultado;
 }
 
-// ===== VERIFICAR DISPONIBILIDAD =====
-export function verificarDisponibilidad(billetesRequeridos) {
-  for (let [valor, cantidad] of Object.entries(billetesRequeridos)) {
-    const billete = billetes.find(b => b.valor === parseInt(valor));
-    if (billete && cantidad > billete.disponibles) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// ===== ACTUALIZAR DISPONIBILIDAD =====
-export function actualizarDisponibilidad(billetesRetirados) {
-  Object.entries(billetesRetirados).forEach(([denominacion, cantidad]) => {
-    const billete = billetes.find(b => b.valor === parseInt(denominacion));
-    if (billete && cantidad > 0) {
-      billete.disponibles = Math.max(0, billete.disponibles - cantidad);
-    }
-  });
-}
-
-// ===== CALCULAR RETIROS RESTANTES =====
+// ===== (Opcional) Retiros 'ilimitados' si no manejas inventario =====
 export function calcularRetirosRestantes() {
-  const disponibilidadActual = billetes.map(b => b.disponibles);
-  const minimoDisponible = Math.min(...disponibilidadActual);
-  return Math.max(0, Math.floor(minimoDisponible * 0.8));
+  return Infinity; // o un número grande si prefieres
 }
 
 // ===== FORMATEAR NÚMERO COMPLETO =====
 export function formatearNumeroCompleto(numero) {
-  return '0' + numero;
+  return "0" + numero;
 }
+

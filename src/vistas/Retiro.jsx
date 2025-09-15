@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import {
   calcularBilletes,
-  calcularRetirosRestantes,
   formatearNumeroCompleto,
 } from "../logica/utilidades";
 
@@ -78,7 +77,7 @@ const Retiro = () => {
 
   const handleMontoPersonalizado = () => {
     const monto = parseInt(montoPersonalizado);
-    if (isNaN(monto) || monto <= 0) {
+    if (isNaN(monto) || monto <= 0 || monto % 10000 !== 0) {
       Swal.fire({
         icon: "warning",
         title: "Monto no válido",
@@ -105,7 +104,6 @@ const Retiro = () => {
   }
 
   const numeroCompleto = formatearNumeroCompleto(datos.numeroIngresado);
-  const retirosRestantes = calcularRetirosRestantes();
 
   return (
     <div
@@ -151,7 +149,10 @@ const Retiro = () => {
             {/* Monto personalizado */}
             <div className="mb-4">
               <h5 className="mb-3 fw-bold text-success">Otro monto</h5>
-              <div className="input-group shadow-sm" style={{ borderRadius: "12px", overflow: "hidden" }}>
+              <div
+                className="input-group shadow-sm"
+                style={{ borderRadius: "12px", overflow: "hidden" }}
+              >
                 <span className="input-group-text fw-bold bg-success text-white">
                   $
                 </span>
@@ -176,9 +177,7 @@ const Retiro = () => {
                   Retirar
                 </button>
               </div>
-              <small className="text-muted">
-                Solo múltiplos de $10.000
-              </small>
+              <small className="text-muted">Solo múltiplos de $10.000</small>
             </div>
           </>
         )}
@@ -208,7 +207,8 @@ const Retiro = () => {
                         <div
                           className="p-2 text-center text-white fw-bold"
                           style={{
-                            background: "linear-gradient(90deg, #28a745, #34d058)",
+                            background:
+                              "linear-gradient(90deg, #28a745, #34d058)",
                             borderRadius: "12px",
                             boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                           }}
@@ -219,10 +219,6 @@ const Retiro = () => {
                     ) : null
                   )}
                 </div>
-              </div>
-
-              <div className="mb-3">
-                <strong>Retiros restantes:</strong> {retirosRestantes}
               </div>
 
               <button

@@ -10,7 +10,6 @@ const RetiroCuentaAhorro = () => {
   const [montoSeleccionado, setMontoSeleccionado] = useState(0);
   const [montoPersonalizado, setMontoPersonalizado] = useState("");
   const [resultado, setResultado] = useState(null);
-  const [errores, setErrores] = useState([]);
 
   useEffect(() => {
     const datosGuardados = localStorage.getItem("datosCuentaAhorros");
@@ -22,33 +21,24 @@ const RetiroCuentaAhorro = () => {
   }, [navigate]);
 
   const procesarRetiro = () => {
-    const erroresValidacion = [];
     const monto = montoSeleccionado || parseInt(montoPersonalizado);
-
-    if (!monto || monto <= 0) {
-      erroresValidacion.push("Debe seleccionar un monto válido");
+    if (!monto || monto <= 0 || monto % 10000 !== 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Monto inválido",
+        text: "Debe ingresar un monto válido y múltiplo de $10.000",
+        confirmButtonText: "Reintentar",
+      });
+      return;
     }
 
     const billetes = calcularBilletes(monto);
     if (!billetes) {
-      erroresValidacion.push(
-        "No se puede dispensar esta cantidad. Solo se permiten múltiplos de $10.000"
-      );
-    }
-
-    if (erroresValidacion.length > 0) {
-      setErrores(erroresValidacion);
       Swal.fire({
         icon: "error",
-        title: "Monto inválido",
-        text: erroresValidacion.join("\n"),
-        confirmButtonText: "Reiniciar proceso",
-      }).then(() => {
-        setMontoSeleccionado(0);
-        setMontoPersonalizado("");
-        setErrores([]);
-        setResultado(null);
-        navigate("/cuenta-ahorros");
+        title: "No se puede dispensar esta cantidad",
+        text: "Solo se permiten múltiplos de $10.000 (10K, 20K, 50K, 100K).",
+        confirmButtonText: "Reintentar",
       });
       return;
     }
@@ -58,7 +48,14 @@ const RetiroCuentaAhorro = () => {
       monto,
       billetes,
     });
-    setErrores([]);
+
+    Swal.fire({
+      icon: "success",
+      title: "✅ Retiro exitoso",
+      text: `Se retiró correctamente $${monto.toLocaleString()} de su cuenta de ahorros`,
+      timer: 2000,
+      showConfirmButton: false,
+    });
   };
 
   if (!datos) return null;
@@ -112,16 +109,6 @@ const RetiroCuentaAhorro = () => {
             </div>
           </div>
 
-          {errores.length > 0 && (
-            <div className="alert alert-danger">
-              {errores.map((error, idx) => (
-                <p key={idx} className="mb-0">
-                  {error}
-                </p>
-              ))}
-            </div>
-          )}
-
           <div className="d-flex gap-3 mt-4">
             <button
               className="btn btn-danger flex-fill"
@@ -171,9 +158,7 @@ const RetiroCuentaAhorro = () => {
 
           <div className="alert alert-info">
             <h6 className="fw-bold">Predicción del sistema:</h6>
-            <p>
-              Retiros restantes en el cajero: {calcularRetirosRestantes()}
-            </p>
+            <p>Retiros restantes en el cajero: {calcularRetirosRestantes()}</p>
           </div>
 
           <button
@@ -189,3 +174,4 @@ const RetiroCuentaAhorro = () => {
 };
 
 export default RetiroCuentaAhorro;
+
