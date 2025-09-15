@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Validar número de teléfono Nequi con indicativos permitidos
 export function validarNumeroTelefono(numero) {
@@ -12,7 +12,7 @@ export function validarNumeroTelefono(numero) {
 }
 
 export function useNequi() {
-  const [claveNequi, setClaveNequi] = useState('');
+  const [claveNequi, setClaveNequi] = useState("");
   const [tiempoRestante, setTiempoRestante] = useState(0);
 
   const generarClaveNequi = () => {
@@ -25,9 +25,11 @@ export function useNequi() {
     let interval;
     if (tiempoRestante > 0) {
       interval = setInterval(() => {
-        setTiempoRestante(prev => {
+        setTiempoRestante((prev) => {
           if (prev <= 1) {
-            generarClaveNequi();
+            // Genera nueva clave automáticamente
+            const nuevaClave = Math.floor(100000 + Math.random() * 900000).toString();
+            setClaveNequi(nuevaClave);
             return 60;
           }
           return prev - 1;

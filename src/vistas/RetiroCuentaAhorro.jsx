@@ -27,7 +27,9 @@ const RetiroCuentaAhorro = () => {
         icon: "error",
         title: "Monto inválido",
         text: "Debe ingresar un monto válido y múltiplo de $10.000",
-        confirmButtonText: "Reintentar",
+        confirmButtonText: "Ir al inicio",
+      }).then(() => {
+        navigate("/");
       });
       return;
     }
@@ -38,7 +40,9 @@ const RetiroCuentaAhorro = () => {
         icon: "error",
         title: "No se puede dispensar esta cantidad",
         text: "Solo se permiten múltiplos de $10.000 (10K, 20K, 50K, 100K).",
-        confirmButtonText: "Reintentar",
+        confirmButtonText: "Ir al inicio",
+      }).then(() => {
+        navigate("/");
       });
       return;
     }

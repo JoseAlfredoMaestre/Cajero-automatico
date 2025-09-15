@@ -13,6 +13,13 @@ const Retiro = () => {
   const [montoPersonalizado, setMontoPersonalizado] = useState("");
   const [billetes, setBilletes] = useState(null);
   const [mostrarReporte, setMostrarReporte] = useState(false);
+  
+  // Estados para el código temporal
+  const [codigoTemporal, setCodigoTemporal] = useState("");
+  const [tiempoRestante, setTiempoRestante] = useState(0);
+  const [mostrarCodigo, setMostrarCodigo] = useState(false);
+  const [codigoIngresado, setCodigoIngresado] = useState("");
+  const [montoARetirar, setMontoARetirar] = useState(0);
 
   const montosFijos = [10000, 20000, 50000, 100000];
 
@@ -25,6 +32,31 @@ const Retiro = () => {
     }
   }, [navigate]);
 
+  // Generar código de 6 dígitos
+  const generarCodigo = () => {
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    setCodigoTemporal(codigo);
+    setTiempoRestante(60);
+  };
+
+  // Efecto para el contador regresivo
+  useEffect(() => {
+    let interval;
+    if (tiempoRestante > 0 && mostrarCodigo) {
+      interval = setInterval(() => {
+        setTiempoRestante((prev) => {
+          if (prev <= 1) {
+            // Genera nuevo código automáticamente al llegar a 0
+            generarCodigo();
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [tiempoRestante, mostrarCodigo]);
+
   const procesarRetiro = (monto) => {
     const resultado = calcularBilletes(monto);
 
@@ -32,21 +64,22 @@ const Retiro = () => {
       Swal.fire({
         icon: "error",
         title: "Monto inválido",
-        text: `❌ El monto ${monto.toLocaleString()} no puede ser entregado.`,
-        confirmButtonText: "Reiniciar proceso",
+        text: `❌ El monto $${monto.toLocaleString()} no puede ser entregado. Solo se permiten múltiplos de $10.000 (10K, 20K, 50K, 100K).`,
+        confirmButtonText: "Ir al inicio",
       }).then(() => {
-        reiniciarProceso();
+        navigate("/");
       });
       return;
     }
 
     setBilletes(resultado);
     setMostrarReporte(true);
+    setMostrarCodigo(false);
 
     Swal.fire({
       icon: "success",
       title: "✅ Retiro exitoso",
-      text: `Se retiró correctamente ${monto.toLocaleString()}`,
+      text: `Se retiró correctamente $${monto.toLocaleString()}`,
       timer: 2000,
       showConfirmButton: false,
     });
@@ -64,9 +97,26 @@ const Retiro = () => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        procesarRetiro(monto);
+        setMontoARetirar(monto);
+        generarCodigo();
+        setMostrarCodigo(true);
+        setCodigoIngresado("");
       }
     });
+  };
+
+  const validarCodigo = () => {
+    if (codigoIngresado === codigoTemporal) {
+      procesarRetiro(montoARetirar);
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Código incorrecto",
+        text: "El código ingresado no coincide con el código temporal actual.",
+        confirmButtonText: "Intentar de nuevo",
+      });
+      setCodigoIngresado("");
+    }
   };
 
   const handleMontoFijo = (monto) => {
@@ -82,6 +132,9 @@ const Retiro = () => {
         icon: "warning",
         title: "Monto no válido",
         text: "Por favor ingrese un monto mayor a 0 y múltiplo de $10.000",
+        confirmButtonText: "Ir al inicio",
+      }).then(() => {
+        navigate("/");
       });
       return;
     }
@@ -97,6 +150,12 @@ const Retiro = () => {
   const reiniciarProceso = () => {
     localStorage.removeItem("datosNequi");
     navigate("/nequi");
+  };
+
+  const cancelarCodigo = () => {
+    setMostrarCodigo(false);
+    setCodigoIngresado("");
+    setTiempoRestante(0);
   };
 
   if (!datos) {
@@ -122,7 +181,58 @@ const Retiro = () => {
           💵 Retiro de Dinero
         </h3>
 
-        {!mostrarReporte && (
+        {/* Pantalla de código temporal */}
+        {mostrarCodigo && (
+          <div className="text-center mb-4">
+            <div className="alert alert-info border-primary rounded-4 shadow-sm p-4">
+              <h4 className="text-primary fw-bold mb-3">🔐 Código Temporal</h4>
+              <div 
+                className="display-4 fw-bold text-success mb-3 p-3 rounded-3"
+                style={{ backgroundColor: "#f8f9fa", letterSpacing: "0.2em" }}
+              >
+                {codigoTemporal}
+              </div>
+              <div className="mb-3">
+                <span className="badge bg-warning text-dark fs-5 p-2">
+                  ⏱️ {tiempoRestante}s
+                </span>
+              </div>
+              <p className="text-muted mb-3">
+                Ingrese este código para completar el retiro de ${montoARetirar.toLocaleString()}
+              </p>
+              
+              <div className="input-group mb-3">
+                <input
+                  type="text"
+                  className="form-control text-center fs-5"
+                  value={codigoIngresado}
+                  onChange={(e) => setCodigoIngresado(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                  placeholder="Ingrese el código"
+                  maxLength="6"
+                  style={{ letterSpacing: "0.2em" }}
+                />
+              </div>
+              
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-success flex-fill fw-bold"
+                  onClick={validarCodigo}
+                  disabled={codigoIngresado.length !== 6}
+                >
+                  Validar Código
+                </button>
+                <button
+                  className="btn btn-secondary flex-fill"
+                  onClick={cancelarCodigo}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!mostrarReporte && !mostrarCodigo && (
           <>
             {/* Montos fijos */}
             <div className="mb-4">
@@ -237,7 +347,7 @@ const Retiro = () => {
         )}
 
         {/* Botón volver */}
-        {!mostrarReporte && (
+        {!mostrarReporte && !mostrarCodigo && (
           <button
             className="btn w-100 fw-bold mt-3 text-white"
             style={{

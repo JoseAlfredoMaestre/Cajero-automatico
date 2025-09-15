@@ -34,10 +34,11 @@ const RetiroAhorro = () => {
       Swal.fire({
         icon: "error",
         title: "Monto inválido",
-        text: `❌ El monto $${monto.toLocaleString()} no puede ser entregado.
-Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000 y $100.000.`,
-        confirmButtonText: "Reiniciar proceso",
-      }).then(reiniciarProceso);
+        text: `❌ El monto $${monto.toLocaleString()} no puede ser entregado.`,
+        confirmButtonText: "Ir al inicio",
+      }).then(() => {
+        navigate("/");
+      });
       return;
     }
 
@@ -81,6 +82,9 @@ Solo se permiten múltiplos de $10.000 con billetes de $10.000, $20.000, $50.000
         icon: "warning",
         title: "Monto no válido",
         text: "Por favor ingrese un monto mayor a 0 y múltiplo de $10.000",
+        confirmButtonText: "Ir al inicio",
+      }).then(() => {
+        navigate("/");
       });
       return;
     }
