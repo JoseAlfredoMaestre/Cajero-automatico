@@ -5,7 +5,7 @@ export function validarNumeroTelefono(numero) {
   if (numero.length !== 10) return false;
   const indicativos = [
     "300", "301", "302", "304", "305", "313", "314", "315", "316", "317", "318", "319",
-    "320", "321", "322", "323", "324", "350", "351"
+    "320", "321", "322", "323", "324", "350", "351", "312", "310"
   ];
   const prefijo = numero.substring(0, 3);
   return indicativos.includes(prefijo) && /^\d{10}$/.test(numero);
